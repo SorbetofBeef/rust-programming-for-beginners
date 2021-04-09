@@ -13,6 +13,7 @@
 //   * Offloading      (luggage is taken off plane at destination)
 //   * AwaitingPickup  (luggage is at destination waiting for passenger pickup)
 //   * EndCustody      (luggage was picked up by passenger)
+//
 // Notes:
 // * Optionally use generics for each state
 
