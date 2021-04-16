@@ -1,5 +1,15 @@
 // Topic: From/Into & TryFrom/TryInto
 //
+// Summary:
+// * A library is needed for an application to convert plain text hex color codes
+//   into their component color values (red, green, and blue). Hex color codes
+//   consist of a hash symbol followed by six hex digits. Every two hex digits
+//   represent a color component in the order of red, green, blue.
+//
+//   Example hex color codes:
+//    #ffffff -> Rgb(255, 255, 255)
+//    #001122 -> Rgb(0, 17, 34)
+//
 // Requirements:
 // * Create a program to convert a hex code (as &str) into an Rgb struct
 // * Implement TryFrom to perform the conversion
