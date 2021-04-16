@@ -56,7 +56,7 @@ impl From<std::num::ParseIntError> for RgbError {
 }
 
 fn main() {
-    // Use `cargo test --bin a37` to test your program
+    // Use `cargo test --bin a37` to test your implementation
 }
 
 #[cfg(test)]
