@@ -12,7 +12,7 @@
 // * Utilize the `thiserror` crate for your error type
 // * Run `cargo test --bin a37` to test your implementation
 
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -62,7 +62,7 @@ fn main() {
 #[cfg(test)]
 mod test {
     use super::Rgb;
-    use std::convert::{TryFrom, TryInto};
+    use std::convert::TryFrom;
 
     #[test]
     fn converts_valid_hex_color() {
