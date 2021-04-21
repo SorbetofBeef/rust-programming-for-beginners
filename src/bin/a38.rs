@@ -1,13 +1,12 @@
 // Topic: Multithreading
 //
 // Requirements:
-// * Run expensive_1 and expensive_2 in separate threads
+// * Run the provided functions in threads
 // * Retrieve the data from the threads to print the message
 //   "Hello, threads!"
 //
 // Notes:
 // * Use the join function to wait for threads to finish
-// * Use the cheap() function as part of the message
 
 fn msg_hello() -> &'static str {
     use std::time::Duration;
@@ -17,11 +16,13 @@ fn msg_hello() -> &'static str {
 
 fn msg_thread() -> &'static str {
     use std::time::Duration;
-    std::thread::sleep(Duration::from_millis(500));
+    std::thread::sleep(Duration::from_millis(1000));
     "threads"
 }
 
 fn msg_excited() -> &'static str {
+    use std::time::Duration;
+    std::thread::sleep(Duration::from_millis(1000));
     "!"
 }
 
@@ -30,10 +31,11 @@ fn main() {
 
     let msg_one = thread::spawn(move || msg_hello());
     let msg_two = thread::spawn(move || msg_thread());
+    let msg_three = thread::spawn(move || msg_excited());
 
-    if let Ok(msg_one) = msg_one.join() {
-        if let Ok(msg_two) = msg_two.join() {
-            println!("{}{}{}", msg_one, msg_two, msg_excited());
-        }
-    }
+    let msg_one = msg_one.join().expect("failed to join msg one");
+    let msg_two = msg_two.join().expect("failed to join msg two");
+    let msg_three = msg_three.join().expect("failed to join msg three");
+
+    println!("{}{}{}", msg_one, msg_two, msg_three);
 }
