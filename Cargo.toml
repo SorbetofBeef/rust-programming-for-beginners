@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 chrono = "*"
 thiserror = "*"
+crossbeam-channel = "*"
+colored = "*"
