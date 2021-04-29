@@ -4,7 +4,7 @@
 // * Create a multi-threaded program to simulate a copy machine.
 //
 //   A partial program has already been written as a guide. Implement
-//   the remaining functionality to complete the simulation.
+//   the remaining functionality on the Copier struct to complete the simulation.
 //
 // Requirements:
 // * The total number of pages must be displayed after each copy
@@ -43,7 +43,8 @@ struct Copier {
 }
 
 impl Copier {
-    /// Print out the next page from the buffer
+    /// Print out the next page from the buffer and return
+    /// whether or not a page was printed.
     fn print(buffer: Arc<Mutex<VecDeque<String>>>) -> bool {
         let mut buffer = buffer.lock();
         if let Some(page) = buffer.pop_front() {
@@ -63,13 +64,17 @@ impl Copier {
         let thread = thread::spawn(move || {
             let mut num_copies = 0;
             loop {
+                // Print out a page from the page buffer
                 if Self::print(Arc::clone(&buffer_arc)) {
                     num_copies += 1;
+                    // Display the total number of pages that have been printed
                     println!("Pages copied: {}", num_copies);
                 }
 
+                // The print rate is 500ms per page
                 thread::sleep(Duration::from_millis(500));
 
+                // Process CopierMsg received on a channel
                 if let Ok(msg) = rx.try_recv() {
                     match msg {
                         CopierMsg::Shutdown => {
@@ -87,6 +92,7 @@ impl Copier {
     /// Add a new job to the buffer
     fn add_job(&self, page: &str) -> bool {
         let mut buffer = self.buffer.lock();
+        // The size of the print buffer only has enough capacity for 3 pages
         if buffer.len() < 3 {
             buffer.push_back(page.to_string());
             true
