@@ -28,17 +28,22 @@ use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
+/// Message copier can receive through a channel
 enum CopierMsg {
     Shutdown,
 }
 
+/// Copy machine
 struct Copier {
     buffer: Arc<Mutex<VecDeque<String>>>,
+    /// Use .join() on this to wait for the thread to terminate
     thread: JoinHandle<()>,
+    /// Use this to send messages to the copier thread through a channel
     tx: Sender<CopierMsg>,
 }
 
 impl Copier {
+    /// Print out the next page from the buffer
     fn print(buffer: Arc<Mutex<VecDeque<String>>>) -> bool {
         let mut buffer = buffer.lock();
         if let Some(page) = buffer.pop_front() {
@@ -49,6 +54,7 @@ impl Copier {
         }
     }
 
+    /// Create a new copier
     fn new() -> Self {
         let (tx, rx) = unbounded();
         let buffer = Arc::new(Mutex::new(VecDeque::new()));
@@ -78,6 +84,7 @@ impl Copier {
         Self { buffer, thread, tx }
     }
 
+    /// Add a new job to the buffer
     fn add_job(&self, page: &str) -> bool {
         let mut buffer = self.buffer.lock();
         if buffer.len() < 3 {
@@ -88,12 +95,14 @@ impl Copier {
         }
     }
 
+    /// Cancel jobs in the buffer
     fn cancel(&self) {
         let mut buffer = self.buffer.lock();
         buffer.clear();
         println!("{}", "Jobs canceled".black().on_red());
     }
 
+    /// Waits until all pages in the buffer are copied
     fn wait_until_done(&self) {
         loop {
             let buffer = self.buffer.lock();
@@ -105,12 +114,14 @@ impl Copier {
         }
     }
 
+    /// Turn off copier
     fn shutdown(self) {
         self.tx.send(CopierMsg::Shutdown);
         self.thread.join();
     }
 }
 
+/// Possible jobs the copier can handle
 enum Job<'a> {
     Cancel,
     Copy(&'a str),
