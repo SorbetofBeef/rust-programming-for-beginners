@@ -29,7 +29,6 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 enum CopierMsg {
-    Cancel,
     Shutdown,
 }
 
@@ -50,12 +49,6 @@ impl Copier {
         }
     }
 
-    fn cancel_jobs(buffer: Arc<Mutex<VecDeque<String>>>) {
-        let mut buffer = buffer.lock();
-        buffer.clear();
-        println!("{}", "Jobs canceled".black().on_red());
-    }
-
     fn new() -> Self {
         let (tx, rx) = unbounded();
         let buffer = Arc::new(Mutex::new(VecDeque::new()));
@@ -73,9 +66,6 @@ impl Copier {
 
                 if let Ok(msg) = rx.try_recv() {
                     match msg {
-                        CopierMsg::Cancel => {
-                            Self::cancel_jobs(Arc::clone(&buffer_arc));
-                        }
                         CopierMsg::Shutdown => {
                             println!("{}", "Copier shutting down...".blue());
                             break;
@@ -99,7 +89,9 @@ impl Copier {
     }
 
     fn cancel(&self) {
-        self.tx.send(CopierMsg::Cancel);
+        let mut buffer = self.buffer.lock();
+        buffer.clear();
+        println!("{}", "Jobs canceled".black().on_red());
     }
 
     fn wait_until_done(&self) {
@@ -124,13 +116,17 @@ enum Job<'a> {
     Copy(&'a str),
 }
 
+/// Helper function to ensure all jobs eventually get sent to the copier
 fn send_jobs(copier: &Copier, mut jobs: VecDeque<Job>) {
     loop {
+        // Get next job
         if let Some(job) = jobs.pop_front() {
             match job {
                 Job::Copy(page) => {
+                    // Try to add the copy job
                     if !copier.add_job(page) {
                         println!("{}", "Buffer full".red());
+                        // Put the job back into the queue
                         jobs.push_front(Job::Copy(page));
                         thread::sleep(Duration::from_millis(100));
                     } else {
@@ -139,6 +135,7 @@ fn send_jobs(copier: &Copier, mut jobs: VecDeque<Job>) {
                 }
                 Job::Cancel => {
                     copier.cancel();
+                    return;
                 }
             }
         } else {
@@ -156,7 +153,7 @@ fn main() {
     jobs.push_back(Job::Copy("page D"));
     jobs.push_back(Job::Copy("page E"));
     jobs.push_back(Job::Copy("page F"));
-    // jobs.push_back(Job::Cancel);   // uncomment this line to test job cancelation
+    // jobs.push_back(Job::Cancel); // uncomment this line to test job cancelation
 
     let copier = Copier::new();
 
