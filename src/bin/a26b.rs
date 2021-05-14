@@ -3,7 +3,7 @@
 // Summary:
 // The existing program is complete, but all the code exists
 // in a single module. This code can benefit from being organized
-// into modules.
+// into multiple modules.
 //
 // Requirements:
 // * Organize the code into two modules based on their functionality:
