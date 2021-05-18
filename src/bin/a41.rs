@@ -41,17 +41,18 @@ struct Worker<M> {
 }
 
 impl Worker<Message> {
-    #[allow(unused_must_use)]
     fn add_job(&self, job: Job) {
-        self.tx.send(Message::AddJob(job));
+        self.tx
+            .send(Message::AddJob(job))
+            .expect("failed to add job");
     }
     #[allow(unused_must_use)]
     fn join(self) {
-        self.handle.join();
+        self.handle.join().expect("failed to join thread");
     }
     #[allow(unused_must_use)]
     fn send_msg(&self, msg: Message) {
-        self.tx.send(msg);
+        self.tx.send(msg).expect("failed to send message");
     }
 }
 
