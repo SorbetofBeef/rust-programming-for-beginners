@@ -9,6 +9,8 @@
 // * The total number of jobs completed must be displayed
 //   at the end of the program.
 // * Use Arc & Mutex to share the total count among threads.
+//   * Arc is in the standard library
+//   * Mutex is in the parking_lot crate
 //
 // Notes:
 // * Ensure following crates are added to your Cargo.toml file:
@@ -16,7 +18,9 @@
 //   - parking_lot
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use parking_lot::Mutex;
 use std::collections::VecDeque;
+use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
@@ -46,18 +50,16 @@ impl Worker<Message> {
             .send(Message::AddJob(job))
             .expect("failed to add job");
     }
-    #[allow(unused_must_use)]
     fn join(self) {
         self.handle.join().expect("failed to join thread");
     }
-    #[allow(unused_must_use)]
     fn send_msg(&self, msg: Message) {
         self.tx.send(msg).expect("failed to send message");
     }
 }
 
 /// Create a new worker to receive jobs.
-fn spawn_worker() -> Worker<Message> {
+fn spawn_worker(counter: Arc<Mutex<usize>>) -> Worker<Message> {
     let (tx, rx) = unbounded();
     // We clone the receiving end here so we have a copy to give to the
     // thread. This allows us to save the `tx` and `rx` into the Worker struct.
@@ -78,6 +80,8 @@ fn spawn_worker() -> Worker<Message> {
                         Job::Print(msg) => println!("{}", msg),
                         Job::Sum(lhs, rhs) => println!("{}+{}={}", lhs, rhs, lhs + rhs),
                     }
+                    let mut counter = counter.lock();
+                    *counter += 1;
                 }
                 // Check for messages on the channel.
                 if let Ok(msg) = rx_thread.try_recv() {
@@ -129,10 +133,14 @@ fn main() {
         Job::Sum(9, 1),
     ];
 
+    let jobs_sent = jobs.len();
+
+    let job_counter = Arc::new(Mutex::new(0));
+
     let mut workers = vec![];
     // Spawn 4 workers to process jobs.
     for _ in 0..4 {
-        let worker = spawn_worker();
+        let worker = spawn_worker(job_counter.clone());
         workers.push(worker);
     }
 
@@ -154,4 +162,10 @@ fn main() {
     for worker in workers {
         worker.join();
     }
+
+    println!("Jobs sent: {}", jobs_sent);
+
+    // print out the number of jobs completed here.
+    let jobs_completed = job_counter.lock();
+    println!("Jobs completed: {}", jobs_completed);
 }
