@@ -8,10 +8,9 @@
 //
 // Requirements:
 // * The total number of pages must be displayed after each copy
-// * The user must be able to cancel a print job
+// * The user must be able to cancel the print jobs
 // * The copier has the following limitations:
 //   - The size of the print buffer only has enough capacity for 3 pages
-//   - The printer takes 500ms to print a page
 // * Use the println! macro to display messages for the simulation
 //
 // Notes:
@@ -43,36 +42,34 @@ struct Copier {
 }
 
 impl Copier {
-    /// Print out the next page from the buffer and return
-    /// whether or not a page was printed.
-    fn print(buffer: Arc<Mutex<VecDeque<String>>>) -> bool {
-        let mut buffer = buffer.lock();
-        if let Some(page) = buffer.pop_front() {
-            println!("{} {}", "Print:".black().on_yellow(), page);
-            true
-        } else {
-            false
-        }
+    // Make a copy of a page. The copy operation takes 500ms.
+    fn make_copy(page: &str) {
+        thread::sleep(Duration::from_millis(500));
+        println!("{} {}", "Print:".black().on_yellow(), page);
     }
 
     /// Create a new copier
     fn new() -> Self {
         let (tx, rx) = unbounded();
-        let buffer = Arc::new(Mutex::new(VecDeque::new()));
+        let deque: VecDeque<String> = VecDeque::new();
+        let buffer = Arc::new(Mutex::new(deque));
 
         let buffer_arc = Arc::clone(&buffer);
         let thread = thread::spawn(move || {
             let mut num_copies = 0;
+            let buffer = buffer_arc;
             loop {
                 // Print out a page from the page buffer
-                if Self::print(Arc::clone(&buffer_arc)) {
+                let page = {
+                    let mut buffer = buffer.lock();
+                    buffer.pop_front()
+                };
+                if let Some(page) = page {
+                    Self::make_copy(page.as_str());
                     num_copies += 1;
                     // Display the total number of pages that have been printed
                     println!("Pages copied: {}", num_copies);
                 }
-
-                // The print rate is 500ms per page
-                thread::sleep(Duration::from_millis(500));
 
                 // Process CopierMsg received on a channel
                 if let Ok(msg) = rx.try_recv() {
@@ -102,7 +99,7 @@ impl Copier {
     }
 
     /// Cancel jobs in the buffer
-    fn cancel(&self) {
+    fn cancel_all(&self) {
         let mut buffer = self.buffer.lock();
         buffer.clear();
         println!("{}", "Jobs canceled".black().on_red());
@@ -111,8 +108,11 @@ impl Copier {
     /// Waits until all pages in the buffer are copied
     fn wait_until_done(&self) {
         loop {
-            let buffer = self.buffer.lock();
-            if buffer.is_empty() {
+            let is_empty = {
+                let buffer = self.buffer.lock();
+                buffer.is_empty()
+            };
+            if is_empty {
                 break;
             } else {
                 thread::sleep(Duration::from_millis(100));
@@ -129,7 +129,7 @@ impl Copier {
 
 /// Possible jobs the copier can handle
 enum Job<'a> {
-    Cancel,
+    CancelAll,
     Copy(&'a str),
 }
 
@@ -150,8 +150,8 @@ fn send_jobs(copier: &Copier, mut jobs: VecDeque<Job>) {
                         println!("{}", "Job added".cyan());
                     }
                 }
-                Job::Cancel => {
-                    copier.cancel();
+                Job::CancelAll => {
+                    copier.cancel_all();
                     return;
                 }
             }
@@ -170,7 +170,7 @@ fn main() {
     jobs.push_back(Job::Copy("page D"));
     jobs.push_back(Job::Copy("page E"));
     jobs.push_back(Job::Copy("page F"));
-    // jobs.push_back(Job::Cancel); // uncomment this line to test job cancelation
+    jobs.push_back(Job::CancelAll); // uncomment this line to test job cancelation
 
     let copier = Copier::new();
 
