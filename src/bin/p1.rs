@@ -62,15 +62,10 @@ impl Bills {
 
     /// Retrieve all the bills.
     fn get_all(&self) -> Vec<&Bill> {
-        let mut bills = vec![];
-        // Iterate through each value of the bill hashmap, ignoring the keys.
-        for bill in self.inner.values() {
-            // Slight change made after the video was created: We are using
-            // a borrow here to make the program more efficient. When iterating
-            // using .values(), the value is borrowed automatically.
-            bills.push(bill);
-        }
-        bills
+        // The values function on HashMap will iterate over references
+        // of the Bills, so we can just collect those directly into
+        // a Vector.
+        self.inner.values().collect()
     }
 
     /// Removes an existing bill. Returns false if the bill does not exist.
@@ -136,6 +131,8 @@ mod menu {
     /// and aborting if the user does not enter any data.
     pub fn add_bill(bills: &mut Bills) {
         println!("Bill name:");
+        // We can also use the question mark operator here
+        // if we change the return type to an Option.
         let name = match get_input() {
             Some(input) => input,
             None => return,
@@ -195,16 +192,6 @@ mod menu {
             println!("{:?}", bill);
         }
     }
-
-    /// Menu for viewing the bill total
-    pub fn bill_total(bills: &Bills) {
-        let bills = bills.get_all();
-        println!("Number of bills: {}", bills.len());
-        println!(
-            "Total amount: ${}",
-            bills.iter().map(|bill| bill.amount).sum::<f64>()
-        );
-    }
 }
 
 // Enumeration over possible main menu options.
@@ -213,7 +200,6 @@ enum MainMenu {
     ViewBill,
     RemoveBill,
     UpdateBill,
-    BillTotal,
 }
 
 impl MainMenu {
@@ -224,7 +210,6 @@ impl MainMenu {
             "2" => Some(Self::ViewBill),
             "3" => Some(Self::RemoveBill),
             "4" => Some(Self::UpdateBill),
-            "5" => Some(Self::BillTotal),
             _ => None,
         }
     }
@@ -238,7 +223,6 @@ impl MainMenu {
         println!("2. View bills");
         println!("3. Remove bill");
         println!("4. Update bill");
-        println!("5. Bill total");
         println!("");
         println!("Enter selection:");
     }
@@ -259,7 +243,6 @@ fn run_main_menu() -> Option<String> {
             Some(MainMenu::ViewBill) => menu::view_bills(&bills),
             Some(MainMenu::RemoveBill) => menu::remove_bill(&mut bills),
             Some(MainMenu::UpdateBill) => menu::update_bill(&mut bills),
-            Some(MainMenu::BillTotal) => menu::bill_total(&mut bills),
             None => break,
         }
     }
