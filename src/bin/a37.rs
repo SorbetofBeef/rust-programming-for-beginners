@@ -1,4 +1,4 @@
-// Topic: From/Into & TryFrom/TryInto
+// Topic: TryFrom/TryInto
 //
 // Summary:
 // * A library is needed for an application to convert hex color codes
