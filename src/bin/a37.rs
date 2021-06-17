@@ -1,7 +1,7 @@
 // Topic: From/Into & TryFrom/TryInto
 //
 // Summary:
-// * A library is needed for an application to convert plain text hex color codes
+// * A library is needed for an application to convert hex color codes
 //   into their component color values (red, green, and blue). Hex color codes
 //   consist of a hash symbol followed by six hex digits. Every two hex digits
 //   represent a color component in the order of red, green, blue.
