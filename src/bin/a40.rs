@@ -30,7 +30,7 @@ enum Vehicle {
     Truck,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Hash, PartialOrd, PartialEq)]
 enum Status {
     Available,
     Maintenance,
@@ -55,45 +55,58 @@ struct StoreFront {
     rentals: Rc<RefCell<Vec<Rental>>>,
 }
 
-fn main() {
-    let vehicles = vec![
-        Rental {
-            status: Status::Available,
-            vehicle: Vehicle::Car,
-            vin: "123".to_owned(),
-        },
-        Rental {
-            status: Status::Maintenance,
-            vehicle: Vehicle::Truck,
-            vin: "abc".to_owned(),
-        },
-    ];
+fn main() {}
 
-    let vehicles = Rc::new(RefCell::new(vehicles));
-    let corporate = Corporate {
-        rentals: Rc::clone(&vehicles),
-    };
-    let storefront = StoreFront {
-        rentals: Rc::clone(&vehicles),
-    };
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    dbg!(&storefront);
+    #[test]
+    fn update_status() {
+        let vehicles = vec![
+            Rental {
+                status: Status::Available,
+                vehicle: Vehicle::Car,
+                vin: "123".to_owned(),
+            },
+            Rental {
+                status: Status::Maintenance,
+                vehicle: Vehicle::Truck,
+                vin: "abc".to_owned(),
+            },
+        ];
 
-    {
-        let mut rentals = storefront.rentals.borrow_mut();
-        if let Some(first) = rentals.get_mut(0) {
-            first.status = Status::Rented;
+        let vehicles = Rc::new(RefCell::new(vehicles));
+
+        let corporate = Corporate {
+            rentals: Rc::clone(&vehicles),
+        };
+        let storefront = StoreFront {
+            rentals: Rc::clone(&vehicles),
+        };
+
+        // Rent out car from storefront.
+        {
+            let mut rentals = storefront.rentals.borrow_mut();
+            if let Some(car) = rentals.get_mut(0) {
+                assert_eq!(car.status, Status::Available);
+                car.status = Status::Rented;
+            }
+        }
+
+        // Corporate changes car back to available.
+        {
+            let mut rentals = corporate.rentals.borrow_mut();
+            if let Some(car) = rentals.get_mut(0) {
+                assert_eq!(car.status, Status::Rented);
+                car.status = Status::Available;
+            }
+        }
+
+        // Storefront status indicates available.
+        let mut rentals = storefront.rentals.borrow();
+        if let Some(car) = rentals.get(0) {
+            assert_eq!(car.status, Status::Available);
         }
     }
-
-    dbg!(&corporate);
-
-    {
-        let mut rentals = corporate.rentals.borrow_mut();
-        if let Some(first) = rentals.get_mut(1) {
-            first.status = Status::Available;
-        }
-    }
-
-    dbg!(&storefront);
 }
