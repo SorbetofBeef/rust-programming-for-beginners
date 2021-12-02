@@ -12,4 +12,8 @@
 //   to uppercase and lowercase
 //   * Try searching for: to_uppercase, to_lowercase
 
-fn main() {}
+fn main() {
+    let first = "My String";
+    let second = "Your String";
+    println!("lower {:?} / upper {:?}", first.to_lowercase(), second.to_uppercase())
+}

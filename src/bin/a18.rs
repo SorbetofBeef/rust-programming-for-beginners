@@ -1,3 +1,5 @@
+use std::io::Result;
+
 // Topic: Result
 //
 // Requirements:
@@ -11,4 +13,34 @@
 // * Return a result from the function
 // * The Err variant should detail the reason why they cannot make a purchase
 
-fn main() {}
+#[derive(Debug)]
+enum LegalAge {
+    Restricted,
+    Unrestricted,
+}
+
+#[derive(Debug)]
+struct Customer {
+    age: i32,
+    name: String,
+}
+
+fn is_legal() -> Result<(), String> {
+    match legal {
+        Ok(restrict) => print_restriction(restrict),
+        _ => Err("age must be a number".to_owned()),
+    };
+}
+
+fn print_restriction(restrict: Result<(), _>) {
+    println!("restricted: {:?}", restrict);
+}
+
+fn main() {
+    let victor = Customer {
+        age: 23,
+        name: "Victor".to_owned(),
+    };
+    let restrict = is_legal(victor);
+    print_restriction(restrict);
+}
