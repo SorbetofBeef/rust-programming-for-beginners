@@ -18,4 +18,85 @@
 // * Create your program starting at level 1. Once finished, advance to the
 //   next level.
 
-fn main() {}
+use std::collections::HashMap;
+use std::io;
+
+#[derive(Debug, Clone)]
+struct Bill {
+    title: String,
+    dollars: i32,
+    cents: i32,
+}
+
+impl Bill {
+    fn show(&self) {
+        println!("Bill: {:?}", &self.title);
+        if &self.cents < &10 {
+            println!("Total: {:?}.0{:?}", &self.dollars, &self.cents)
+        } else {
+            println!("Total: {:?}.{:?}", &self.dollars, &self.cents)
+        };
+        println!("");
+    }
+
+    fn new(title: &str, dollars: i32, cents: i32) {
+        let new_bill = Self {
+            title: title.to_owned(),
+            dollars,
+            cents
+        };
+        let mut bills = HashMap::new();
+        bills.insert(title, new_bill);
+    }
+}
+
+#[derive(Debug)]
+enum MainMenu {
+    New,
+    View,
+    Edit,
+    Delete,
+    Quit
+}
+
+fn menu_new() {
+    println!("Creating new bill...");
+}
+
+fn menu_view() {
+    println!("Creating new bill...");
+}
+fn menu() -> io::Result<String> {
+    let menu_string = "
+    Billing App
+Welcome to BillingApp 
+commands:
+    new      - Adds a new bill
+    view     - View existing bills
+    edit N/A - Edit an existing bill
+    del  N/A - Delete an existing bill
+    q        - Quit application
+    ";
+    println!("{}", menu_string);
+    print!(":>");
+    let mut buffer = String::new();
+    io::stdin().read_line(&mut buffer)?;
+    Ok(buffer.to_owned())
+}
+
+fn main() {
+    let bill_one = Bill {
+        title: "Electricity".to_owned(),
+        dollars: 130,
+        cents: 20
+    };
+
+    let bill_two = Bill {
+        title: "Rent".to_owned(),
+        dollars: 700,
+        cents: 00
+    };
+    let main_menu = menu();
+
+
+}
